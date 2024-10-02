@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Trimmer</title>
+</head>
+<body>
+    <h2>Video Trimmer</h2>
+
+    <!-- Form to upload video and input start/end times -->
+    <form id="video-trimmer-form">
+        <label for="videoFile">Upload Video:</label>
+        <input type="file" id="videoFile" accept="video/*" required>
+        <br><br>
+        <label for="startTime">Start Time (seconds):</label>
+        <input type="number" id="startTime" min="0" required>
+        <br><br>
+        <label for="endTime">End Time (seconds):</label>
+        <input type="number" id="endTime" min="0" required>
+        <br><br>
+        <button type="submit">Trim Video</button>
+    </form>
+
+    <p id="statusMessage"></p>
+
+    <script>
+        document.getElementById('video-trimmer-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const videoFile = document.getElementById('videoFile').files[0];
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+
+            if (videoFile && startTime && endTime) {
+                if (parseFloat(endTime) > parseFloat(startTime)) {
+                    // Create a FormData object to send the file and timing info to the backend
+                    let formData = new FormData();
+                    formData.append('video', videoFile);
+                    formData.append('start', startTime);
+                    formData.append('end', endTime);
+
+                    // Use Fetch API to send the request to the backend
+                    fetch('/trim_video', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'trimmed_video.mp4';  // Suggests download filename
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        document.getElementById('statusMessage').textContent = "Download trimmed video!";
+                    })
+                    .catch(error => {
+                        document.getElementById('statusMessage').textContent = "Error trimming video!";
+                        console.error('Error:', error);
+                    });
+                } else {
+                    alert("End time must be greater than start time!");
+                }
+            }
+        });
+    </script>
+</body>
+  </html>
